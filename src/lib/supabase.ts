@@ -14,7 +14,9 @@ export const supabase = createClient(url, key, {
     ...(Platform.OS !== 'web' ? { storage: AsyncStorage } : {}),
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // On web, finish Google sign-in from the URL Google redirects back to.
+    detectSessionInUrl: Platform.OS === 'web',
+    flowType: 'pkce',
     lock: processLock,
   },
 });

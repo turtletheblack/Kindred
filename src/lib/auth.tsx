@@ -1,5 +1,8 @@
 import type { Session } from '@supabase/supabase-js';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { Platform } from 'react-native';
 
 import { supabase } from './supabase';
 
@@ -40,6 +43,39 @@ export async function sendCode(email: string) {
 export async function verifyCode(email: string, token: string) {
   const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
   if (error) throw error;
+}
+
+// Google sign-in, handled by Supabase. Kindred only uses it to identify the
+// account; nothing from the Google profile is shown to other users.
+export async function signInWithGoogle() {
+  if (Platform.OS === 'web') {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) throw error;
+    return;
+  }
+
+  const redirectTo = Linking.createURL('auth/callback');
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo, skipBrowserRedirect: true },
+  });
+  if (error) throw error;
+
+  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  if (result.type !== 'success') return;
+
+  const { queryParams } = Linking.parse(result.url);
+  if (typeof queryParams?.error_description === 'string') {
+    throw new Error(queryParams.error_description);
+  }
+  if (typeof queryParams?.code !== 'string') {
+    throw new Error('Google sign-in did not finish. Please try again.');
+  }
+  const exchange = await supabase.auth.exchangeCodeForSession(queryParams.code);
+  if (exchange.error) throw exchange.error;
 }
 
 export async function signOut() {

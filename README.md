@@ -13,8 +13,8 @@ it costs nothing to run while it's small.
 
 ### How privacy works
 
-Every account is hidden. You sign in with your email and a one-time code, and
-nobody else ever sees your email. Your profile (name, how to reach you, rough
+Every account is hidden. You sign in with Google or with a one-time code sent
+to your email, and nobody else ever sees your email or Google account. Your profile (name, how to reach you, rough
 area, time zone) is visible only to you. In each match you choose separately
 whether to reveal your name, your contact, or your area to that one person.
 Your partner always sees your badges, nothing more unless you reveal it.
@@ -64,9 +64,12 @@ Server functions the app calls: `confirm_adult`, `match_partner`, `block_user`,
    template so the email contains the 6-digit code the app asks for.
 5. Supabase's built-in email sender only delivers to members of your Supabase
    organization (Organization settings > Team), at about 2 emails an hour. That's
-   enough for you to test sign-in yourself. To let anyone else sign in, you need
-   your own email sender, see "Sending sign-in emails" below.
-6. Copy `.env.example` to `.env` and fill in the project URL and publishable
+   enough for you to test sign-in yourself. Testers can use Google sign-in
+   (next section), or see "Sending sign-in emails" below.
+6. Under **Authentication > URL Configuration > Redirect URLs**, add
+   `kindred://**`, `exp://**` and `http://localhost:8081`, so sign-in can
+   return to the app, Expo Go, and the web version.
+7. Copy `.env.example` to `.env` and fill in the project URL and publishable
    key from **Project Settings > API**. Never put the secret (service role) key in the app.
 
 To make yourself an admin, run this in the SQL Editor after you've signed in once:
@@ -78,6 +81,24 @@ where id = (select id from auth.users where email = 'you@example.com');
 
 Note: free Supabase projects pause after a week with no activity. Opening the
 dashboard and clicking **Restore** brings them back.
+
+## Set up Google sign-in (free)
+
+1. In Supabase, open **Authentication > Sign In / Providers > Google** and copy
+   the **Callback URL** it shows (it ends in `/auth/v1/callback`).
+2. Go to [console.cloud.google.com](https://console.cloud.google.com), create a
+   project called Kindred, and open **Google Auth Platform** (also listed as
+   "APIs & Services > OAuth consent screen").
+3. Fill in the app name and your support email. For audience choose **External**.
+   The only scopes needed are the basic ones (email, profile, openid), so Google
+   doesn't require a review.
+4. Under **Clients**, create a client of type **Web application**. Under
+   **Authorized redirect URIs**, paste the callback URL from step 1. Copy the
+   client ID and client secret it gives you.
+5. Back in Supabase, turn Google on, paste the client ID and secret, and save.
+6. While the Google app is in **Testing** mode, only people you add under
+   **Audience > Test users** (up to 100) can sign in. That works well for a
+   community test. Click **Publish app** when you want anyone to be able to sign in.
 
 ## Sending sign-in emails
 

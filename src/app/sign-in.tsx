@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ScrollView, Text } from 'react-native';
 
-import { sendCode, verifyCode } from '../lib/auth';
+import { sendCode, signInWithGoogle, verifyCode } from '../lib/auth';
 import { Button, Field, Note, styles } from '../lib/ui';
 
 export default function SignIn() {
@@ -28,9 +28,16 @@ export default function SignIn() {
       <Text style={styles.title} accessibilityRole="header">Kindred</Text>
       <Text style={styles.body}>Find people who speak your language.</Text>
       <Note>
-        Your email is only used to sign you in. Nobody you match with sees it, or anything else
-        about you, unless you choose to share it with them.
+        Your Google account or email is only used to sign you in. Nobody you match with sees it,
+        or anything else about you, unless you choose to share it with them.
       </Note>
+
+      <Button
+        label="Sign in with Google"
+        disabled={busy}
+        onPress={() => run(signInWithGoogle)}
+      />
+      <Note>Or sign in with a code sent to your email:</Note>
 
       <Field
         label="Email"
