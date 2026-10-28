@@ -66,9 +66,11 @@ Server functions the app calls: `confirm_adult`, `match_partner`, `block_user`,
    organization (Organization settings > Team), at about 2 emails an hour. That's
    enough for you to test sign-in yourself. Testers can use Google sign-in
    (next section), or see "Sending sign-in emails" below.
-6. Under **Authentication > URL Configuration > Redirect URLs**, add
-   `kindred://**`, `exp://**` and `http://localhost:8081`, so sign-in can
-   return to the app, Expo Go, and the web version.
+6. Under **Authentication > URL Configuration**, set **Site URL** to
+   `http://localhost:8081`, and under **Redirect URLs** add `kindred://**`,
+   `exp://**` and `http://localhost:8081/**`, so sign-in can return to the
+   app, Expo Go, and the web version. Without these, Supabase sends people
+   to `localhost:3000` after signing in.
 7. Copy `.env.example` to `.env` and fill in the project URL and publishable
    key from **Project Settings > API**. Never put the secret (service role) key in the app.
 
