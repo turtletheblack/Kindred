@@ -62,9 +62,10 @@ Server functions the app calls: `confirm_adult`, `match_partner`, `block_user`,
    Phone sign-in needs a paid SMS provider, so it's left off for now.
 4. Under **Authentication > Emails > Magic Link**, add `{{ .Token }}` to the
    template so the email contains the 6-digit code the app asks for.
-5. Supabase's built-in email sender is limited to a few emails an hour. That's
-   fine for testing. Before inviting your community, connect a free SMTP
-   sender (for example Resend or Brevo's free plans) under **Authentication > Emails > SMTP**.
+5. Supabase's built-in email sender only delivers to members of your Supabase
+   organization (Organization settings > Team), at about 2 emails an hour. That's
+   enough for you to test sign-in yourself. To let anyone else sign in, you need
+   your own email sender, see "Sending sign-in emails" below.
 6. Copy `.env.example` to `.env` and fill in the project URL and publishable
    key from **Project Settings > API**. Never put the secret (service role) key in the app.
 
@@ -77,6 +78,23 @@ where id = (select id from auth.users where email = 'you@example.com');
 
 Note: free Supabase projects pause after a week with no activity. Opening the
 dashboard and clicking **Restore** brings them back.
+
+## Sending sign-in emails
+
+Free email services such as Brevo (300 emails a day free) work with Supabase,
+but they need a domain you own so emails don't land in spam or get dropped by
+Gmail. A domain costs about $10 a year. Once you have one:
+
+1. In Brevo, open **Senders, Domains & Dedicated IPs**, add your domain, and
+   add the DNS records Brevo shows you at your domain registrar. Then create
+   a sender such as `no-reply@yourdomain.com`.
+2. In Brevo, open **Settings > SMTP & API > SMTP** and generate an SMTP key.
+3. In Supabase, open **Authentication > Emails > SMTP Settings**, turn on
+   **Enable custom SMTP**, and fill in: sender email `no-reply@yourdomain.com`,
+   sender name `Kindred`, host `smtp-relay.brevo.com`, port `587`, username
+   your Brevo login email, password the SMTP key.
+4. Supabase then allows 30 emails an hour; raise it under
+   **Authentication > Rate Limits** if needed.
 
 ## Run the app
 
