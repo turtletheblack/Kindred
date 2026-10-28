@@ -119,14 +119,39 @@ Gmail. A domain costs about $10 a year. Once you have one:
 4. Supabase then allows 30 emails an hour; raise it under
    **Authentication > Rate Limits** if needed.
 
-## Run the app
+## Run the app on your phone
+
+Google sign-in needs Kindred installed as its own app, because Expo Go
+can't reliably return to itself after signing in. Building the Android app
+in Expo's cloud is free.
+
+One-time setup:
+
+1. Create a free account at [expo.dev](https://expo.dev).
+2. In the project folder, run:
+   ```bash
+   npm install
+   npx eas-cli@latest login
+   npx eas-cli@latest build --profile development --platform android
+   ```
+   Answer **yes** when it asks to create the project or generate a keystore.
+   The build takes 10 to 20 minutes, then gives you a link and QR code.
+3. Open that link on your Android phone, download the APK and install it.
+   Android will ask you to allow installs from your browser.
+
+Each time you work on the app:
 
 ```bash
-npm install
 npx expo start
 ```
 
-Scan the QR code with the Expo Go app on your phone.
+Open the **Kindred** app on your phone (not Expo Go) and pick your computer
+from the list, or scan the QR code. Code changes show up straight away. You
+only need a new build when a native package is added.
+
+iPhones need a paid Apple developer account ($99 a year) to install
+anything outside the App Store, so iPhone testing waits until that's worth it.
+On a computer, press `w` after `npx expo start` to use the web version.
 
 ## Checks
 
