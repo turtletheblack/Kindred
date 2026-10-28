@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "kindred",
+    "name": "Kindred",
     "slug": "kindred",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,6 +20,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-localization"
+    ],
+    "scheme": "kindred"
   }
 }

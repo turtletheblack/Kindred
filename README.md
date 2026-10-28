@@ -1,0 +1,107 @@
+# Kindred
+
+A friendship app that matches adults one-on-one by how they communicate, not
+what they like. Built with Expo (React Native) and the Supabase free tier, so
+it costs nothing to run while it's small.
+
+## What's here
+
+- `src/app/`: the app screens (Expo Router). Sign-in, home, and your private profile.
+- `src/lib/`: the Supabase client, sign-in, and profile helpers.
+- `supabase/migrations/`: the database schema, privacy rules and server functions.
+- `supabase/tests/`: privacy and safety checks that run against plain Postgres.
+
+### How privacy works
+
+Every account is hidden. You sign in with your email and a one-time code, and
+nobody else ever sees your email. Your profile (name, how to reach you, rough
+area, time zone) is visible only to you. In each match you choose separately
+whether to reveal your name, your contact, or your area to that one person.
+Your partner always sees your badges, nothing more unless you reveal it.
+
+The database enforces this with row-level security, so it holds even if
+someone bypasses the app:
+
+| Data | Who can see it |
+| --- | --- |
+| Your profile | You |
+| Your test results and scores | You (partners see only your three badges) |
+| A match and its messages | The two people in it |
+| What you've revealed | You choose, per match |
+| Your check-in answers | You |
+| Your blocks and reports | You (admins see reports) |
+| Compatibility table | Everyone signed in reads it, admins edit it |
+
+Trust level, the admin flag, the 18+ confirmation and matches themselves can
+only be changed by server functions, never directly from the app.
+
+### Database tables
+
+- `badges`: the 6 communication and 7 friendship badges.
+- `compatibility`: one row per pair of badges with an `adjustment` that starts
+  at 0. Edit it in the Supabase table editor to try out a theory; no code change needed.
+- `matching_settings`: the 60-point threshold, 10% exploratory share,
+  15-message check-in point and 90-day retake wait.
+- `profiles`: private details, rough area and time zone, 18+ confirmation, trust level.
+- `test_results`: every test taken, with answers and per-badge percentages.
+  The newest one counts (`current_test_results`), so retakes are kept as history.
+- `matches`: one row per pair, ever. Ending a match is a soft delete, and the
+  pair can never be matched again.
+- `match_reveals`, `messages`, `checkins`, `blocks`, `reports`.
+
+Server functions the app calls: `confirm_adult`, `match_partner`, `block_user`,
+`end_match`, `report_user`, `delete_my_account`.
+
+## Set up Supabase (free)
+
+1. Create a free account at [supabase.com](https://supabase.com) and a new
+   project. Pick the region closest to your users. Save the database password somewhere safe.
+2. Open **SQL Editor**, paste the contents of
+   `supabase/migrations/20261028000000_init.sql`, and run it.
+3. Under **Authentication > Sign In / Providers**, make sure **Email** is on.
+   Phone sign-in needs a paid SMS provider, so it's left off for now.
+4. Under **Authentication > Emails > Magic Link**, add `{{ .Token }}` to the
+   template so the email contains the 6-digit code the app asks for.
+5. Supabase's built-in email sender is limited to a few emails an hour. That's
+   fine for testing. Before inviting your community, connect a free SMTP
+   sender (for example Resend or Brevo's free plans) under **Authentication > Emails > SMTP**.
+6. Copy `.env.example` to `.env` and fill in the project URL and publishable
+   key from **Project Settings > API**. Never put the secret (service role) key in the app.
+
+To make yourself an admin, run this in the SQL Editor after you've signed in once:
+
+```sql
+update public.profiles set is_admin = true
+where id = (select id from auth.users where email = 'you@example.com');
+```
+
+Note: free Supabase projects pause after a week with no activity. Opening the
+dashboard and clicking **Restore** brings them back.
+
+## Run the app
+
+```bash
+npm install
+npx expo start
+```
+
+Scan the QR code with the Expo Go app on your phone.
+
+## Checks
+
+```bash
+npm run typecheck
+PGHOST=/tmp PGUSER=postgres npm run test:db   # needs a local Postgres
+```
+
+`test:db` builds a throwaway database, applies the migrations on top of a
+small stand-in for Supabase's auth, and checks the privacy rules: strangers
+can't see matches or chats, hidden fields stay hidden until revealed, blocks
+end matches, ended pairs are never re-matched, and deleting an account
+removes everything except anonymised safety reports.
+
+## Not built yet
+
+These come in later steps: the 18-question test and scoring, the matching
+queue, chat screens and the reveal toggles, the message filter and crisis
+links, check-ins, Kind Exit, nudges, the admin page, and scheduled backups.
