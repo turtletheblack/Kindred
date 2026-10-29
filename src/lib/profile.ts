@@ -10,6 +10,8 @@ export type Profile = {
   timezone: string | null;
   adult_confirmed_at: string | null;
   trust_level: number;
+  matching_status: 'inactive' | 'queued' | 'paused';
+  suspended_at: string | null;
 };
 
 export type ProfileEdits = Pick<Profile, 'display_name' | 'contact' | 'region' | 'timezone'>;
@@ -27,7 +29,7 @@ export function deviceTimezone() {
 export async function getMyProfile() {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, display_name, contact, region, timezone, adult_confirmed_at, trust_level')
+    .select('id, display_name, contact, region, timezone, adult_confirmed_at, trust_level, matching_status, suspended_at')
     .single();
   if (error) throw error;
   return data as Profile;

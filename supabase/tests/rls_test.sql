@@ -14,9 +14,9 @@ update public.profiles set display_name = 'Ana', contact = 'ana@chat', region = 
 update public.profiles set display_name = 'Ben' where id = '00000000-0000-0000-0000-00000000000b';
 
 insert into public.test_results (user_id, answers, communication_scores, friendship_scores,
-  primary_communication, secondary_communication, friendship) values
-  ('00000000-0000-0000-0000-00000000000a', '[]', '{"IP": 50}', '{"SH": 60}', 'IP', 'RC', 'SH'),
-  ('00000000-0000-0000-0000-00000000000b', '[]', '{"EP": 50}', '{"TL": 60}', 'EP', 'DC', 'TL');
+  communication, friendship) values
+  ('00000000-0000-0000-0000-00000000000a', '[]', '{"IP": 50}', '{"SH": 60}', 'IP', 'SH'),
+  ('00000000-0000-0000-0000-00000000000b', '[]', '{"EP": 50}', '{"TL": 60}', 'EP', 'TL');
 
 insert into public.matches (id, user_a, user_b, score) values
   ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b', 72);
@@ -89,7 +89,7 @@ do $$
 declare p record;
 begin
   select * into p from public.match_partner('11111111-1111-1111-1111-111111111111');
-  perform pg_temp.check(p.primary_communication = 'IP' and p.friendship = 'SH', 'a match partner sees badges');
+  perform pg_temp.check(p.communication = 'IP' and p.friendship = 'SH', 'a match partner sees badges');
   perform pg_temp.check(p.display_name is null and p.contact is null and p.region is null, 'name, contact and area stay hidden by default');
 end $$;
 

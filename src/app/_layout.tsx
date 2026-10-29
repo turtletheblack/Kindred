@@ -13,6 +13,11 @@ function RootStack() {
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="index" />
         <Stack.Screen name="profile" options={{ headerShown: true, title: 'Your private profile' }} />
+        <Stack.Screen name="test" options={{ headerShown: true, title: 'Communication test' }} />
+        <Stack.Screen name="results" options={{ headerShown: true, title: 'Your badges' }} />
+        <Stack.Screen name="match/[id]/index" options={{ headerShown: true, title: 'Chat' }} />
+        <Stack.Screen name="match/[id]/about" options={{ headerShown: true, title: 'About your match' }} />
+        <Stack.Screen name="match/[id]/report" options={{ headerShown: true, title: 'Report' }} />
       </Stack.Protected>
       <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="sign-in" />
