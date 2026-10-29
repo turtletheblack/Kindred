@@ -9,6 +9,7 @@ import {
   updateMyProfile,
   type Profile,
 } from '../lib/profile';
+import { trustLevels } from '../lib/badges';
 import { Button, Field, Note, styles } from '../lib/ui';
 
 export default function ProfileScreen() {
@@ -121,6 +122,11 @@ export default function ProfileScreen() {
       )}
 
       {message && <Text style={styles.body} accessibilityLiveRegion="polite">{message}</Text>}
+
+      <Text style={styles.heading} accessibilityRole="header">
+        Trust level: {trustLevels[profile.trust_level]?.name}
+      </Text>
+      <Note>{trustLevels[profile.trust_level]?.about}</Note>
 
       <Text style={styles.heading} accessibilityRole="header">Delete account</Text>
       <Button label="Delete my account" tone="danger" onPress={askToDelete} />
