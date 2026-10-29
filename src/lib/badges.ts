@@ -79,9 +79,9 @@ export function badgeName(code: string | null | undefined) {
   return code && code in badges ? badges[code as BadgeCode].name : 'Unknown';
 }
 
-// e.g. "IP/RC · SH"
-export function comboString(primary: string, secondary: string, friendship: string) {
-  return `${primary}/${secondary} · ${friendship}`;
+// e.g. "IP/SH": communication style, then friendship style.
+export function comboString(communication: string | null, friendship: string | null) {
+  return `${communication ?? '?'}/${friendship ?? '?'}`;
 }
 
 export const trustLevels = [

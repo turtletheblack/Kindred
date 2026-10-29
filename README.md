@@ -26,7 +26,7 @@ someone bypasses the app:
 | Data | Who can see it |
 | --- | --- |
 | Your profile | You |
-| Your test results and scores | You (partners see only your three badges) |
+| Your test results and scores | You (partners see only your two badges) |
 | A match and its messages | The two people in it |
 | What you've revealed | You choose, per match |
 | Your check-in answers | You |
@@ -63,23 +63,25 @@ Server functions the app calls: `confirm_adult`, `submit_test`, `join_queue`,
 ## How the core loop works
 
 **The test.** Questions 1 to 9 decide communication style, 10 to 18 friendship
-style. Each answer is one vote; a badge's percentage is its share of the 9
-votes. The two most-voted communication styles become primary and secondary,
-the most-voted friendship style becomes the friendship badge, and ties go to
-the style picked first. Scoring happens on the server (`submit_test`), and
+style. Each answer is one vote for one style (communication questions have 6
+answers, friendship questions 7, so every style can be told apart); a
+style's percentage is its share of the 9 votes. The most-voted style in each
+half becomes that badge, so everyone has two, written like `IP/SH`. Ties go
+to the style picked first. Scoring happens on the server (`submit_test`), and
 retakes wait 90 days.
 
 **Matching.** Pressing *Find a match* joins the queue and matches straight away
 if someone fits; otherwise the app checks again each time you open it, and
 whenever anyone else joins. Each pair gets a score out of 100:
 
-- Three slots are compared: primary communication (60%), secondary (20%) and
-  friendship (20%). Same badge scores 100. A different badge scores 50 plus
+- Two slots are compared: communication (70%) and friendship (30%). Same
+  badge scores 100. A different badge scores 50 plus
   half of how much each person also leans toward the other's badge, using the
   percentages, so close second choices count.
 - Every pair of badges between the two people then adds its `adjustment` from
-  the `compatibility` table: two primary badges count 60%, a primary and another
-  badge 40%, any other pair 20%. All adjustments start at 0.
+  the `compatibility` table: two communication badges count 70%, a
+  communication and a friendship badge 50%, two friendship badges 30%. All
+  adjustments start at 0.
 - For ranking, people who have waited get +2 a day (up to +10), and each hour
   of time zone difference costs 1 point (up to 10).
 - The best pairs are matched first, if they reach 60.

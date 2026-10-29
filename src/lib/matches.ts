@@ -13,8 +13,7 @@ export type MatchSummary = {
 
 export type Partner = {
   partner_id: string;
-  primary_communication: string | null;
-  secondary_communication: string | null;
+  communication: string | null;
   friendship: string | null;
   trust_level: number;
   display_name: string | null;

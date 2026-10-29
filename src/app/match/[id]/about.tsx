@@ -83,7 +83,7 @@ export default function AboutMatch() {
   }
 
   if (!partner) return null;
-  const partnerBadges = [partner.primary_communication, partner.secondary_communication, partner.friendship]
+  const partnerBadges = [partner.communication, partner.friendship]
     .filter((c): c is BadgeCode => !!c && c in badges);
   const active = status === 'active';
 

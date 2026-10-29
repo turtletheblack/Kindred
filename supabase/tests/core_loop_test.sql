@@ -73,8 +73,8 @@ do $$ begin
   end;
   begin
     insert into public.test_results (user_id, answers, communication_scores, friendship_scores,
-      primary_communication, secondary_communication, friendship)
-      values (auth.uid(), '{}', '{}', '{}', 'IP', 'EP', 'SH');
+      communication, friendship)
+      values (auth.uid(), '{}', '{}', '{}', 'IP', 'SH');
     raise exception 'FAILED: wrote own test result';
   exception when insufficient_privilege then
     raise notice 'ok: test results can only come from server-side scoring';
@@ -104,7 +104,7 @@ select pg_temp.onboard('00000000-0000-0000-0000-00000000000a',
   array['IP','IP','IP','IP','IP','RC','RC','RC','EP', 'SH','SH','SH','SH','SH','SH','TL','TL','TL']) \g /dev/null
 select pg_temp.onboard('00000000-0000-0000-0000-00000000000d',
   array['IP','IP','IP','IP','IP','RC','RC','RC','EP', 'SH','SH','SH','SH','SH','SH','TL','TL','TL']) \g /dev/null
--- Ben ties DC and EP four each; DC was picked first, so it's primary.
+-- Ben ties DC and EP four each; DC was picked first, so it's his badge.
 select pg_temp.onboard('00000000-0000-0000-0000-00000000000b',
   array['DC','EP','EP','DC','EP','DC','EP','DC','AC', 'TL','TL','TL','TL','TL','TL','TA','TA','TA']) \g /dev/null
 select pg_temp.onboard('00000000-0000-0000-0000-00000000000c',
@@ -118,12 +118,12 @@ do $$
 declare r public.test_results;
 begin
   select * into r from public.test_results where user_id = '00000000-0000-0000-0000-00000000000a';
-  perform pg_temp.check(r.primary_communication = 'IP' and r.secondary_communication = 'RC' and r.friendship = 'SH',
-    'the most-picked styles become the badges');
+  perform pg_temp.check(r.communication = 'IP' and r.friendship = 'SH',
+    'the most-picked style in each half becomes the badge');
   perform pg_temp.check((r.communication_scores ->> 'IP')::numeric = 55.6 and (r.communication_scores ->> 'DC')::numeric = 0
     and (r.friendship_scores ->> 'SH')::numeric = 66.7, 'each badge gets a percentage score');
   select * into r from public.test_results where user_id = '00000000-0000-0000-0000-00000000000b';
-  perform pg_temp.check(r.primary_communication = 'DC' and r.secondary_communication = 'EP', 'ties go to the style picked first');
+  perform pg_temp.check(r.communication = 'DC', 'ties go to the style picked first');
   perform pg_temp.check((select trust_level from public.profiles where id = '00000000-0000-0000-0000-00000000000a') = 1,
     'confirming 18+ and taking the test makes you a member (trust level 1)');
 end $$;
@@ -142,13 +142,12 @@ reset role;
 do $$ begin
   perform pg_temp.check(public.compatibility_score('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000d') = 100,
     'identical styles score 100');
-  -- 60% x (IP vs DC: 50 + (0 + 0)/2) + 20% x (RC vs EP: 50 + (11.1 + 0)/2)
-  --   + 20% x (SH vs TL: 50 + (33.3 + 0)/2)
-  perform pg_temp.check(public.compatibility_score('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b') = 54.44,
+  -- 70% x (IP vs DC: 50 + (0 + 0)/2) + 30% x (SH vs TL: 50 + (33.3 + 0)/2)
+  perform pg_temp.check(public.compatibility_score('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b') = 55.00,
     'different styles score lower, with credit for overlap');
   update public.compatibility set adjustment = 20 where badge_a = 'DC' and badge_b = 'IP';
-  perform pg_temp.check(public.compatibility_score('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b') = 66.44,
-    'a compatibility table adjustment raises the score (two primaries count 60%)');
+  perform pg_temp.check(public.compatibility_score('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b') = 69.00,
+    'a compatibility table adjustment raises the score (two communication badges count 70%)');
   update public.compatibility set adjustment = 0;
 end $$;
 

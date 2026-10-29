@@ -104,12 +104,8 @@ export default function Home() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={[styles.heading, { marginTop: 0, flex: 1 }]}>
                 {current.partner?.display_name ??
-                  (current.partner?.primary_communication
-                    ? comboString(
-                        current.partner.primary_communication,
-                        current.partner.secondary_communication ?? '',
-                        current.partner.friendship ?? '',
-                      )
+                  (current.partner?.communication
+                    ? comboString(current.partner.communication, current.partner.friendship)
                     : 'Your match')}
               </Text>
               {current.match.has_new && (
@@ -117,7 +113,7 @@ export default function Home() {
               )}
             </View>
             <Text style={styles.body}>
-              {badgeName(current.partner?.primary_communication)} · {badgeName(current.partner?.friendship)}
+              {badgeName(current.partner?.communication)} · {badgeName(current.partner?.friendship)}
             </Text>
             <Note>Open chat</Note>
           </Card>
@@ -145,7 +141,7 @@ export default function Home() {
               <Text style={styles.heading}>Take the communication test</Text>
               <Text style={styles.body}>
                 18 quick questions about how you talk and what kind of friend you are. You'll get
-                three badges that help your matches know how to talk with you.
+                two badges that help your matches know how to talk with you.
               </Text>
               <Button label="Start the test" onPress={() => router.push('/test')} />
             </Card>
@@ -179,7 +175,7 @@ export default function Home() {
 
       {result && (
         <Button
-          label={`Your badges: ${comboString(result.primary_communication, result.secondary_communication, result.friendship)}`}
+          label={`Your badges: ${comboString(result.communication, result.friendship)}`}
           tone="plain"
           onPress={() => router.push('/results')}
         />

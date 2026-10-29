@@ -69,9 +69,7 @@ export default function Chat() {
 
   const title =
     partner?.display_name ??
-    (partner?.primary_communication
-      ? comboString(partner.primary_communication, partner.secondary_communication ?? '', partner.friendship ?? '')
-      : 'Chat');
+    (partner?.communication ? comboString(partner.communication, partner.friendship) : 'Chat');
   const active = status === 'active';
 
   return (

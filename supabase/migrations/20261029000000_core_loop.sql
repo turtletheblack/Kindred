@@ -14,6 +14,9 @@
 
 alter table public.matching_settings
   add column max_active_matches int not null default 1 check (max_active_matches >= 1),
+  -- How much each badge counts toward a match score.
+  add column communication_weight numeric(3, 2) not null default 0.70,
+  add column friendship_weight numeric(3, 2) not null default 0.30,
   -- Points added per day the longer-waiting person has been in the queue.
   add column wait_boost_per_day numeric(5, 2) not null default 2,
   add column wait_boost_max numeric(5, 2) not null default 10,
@@ -48,143 +51,147 @@ create table public.test_options (
 );
 
 insert into public.test_questions (id, kind, prompt) values
-  (1, 'communication', 'A friend tells you about a problem. What do you usually do first?'),
-  (2, 'communication', 'When you have a big decision to make, you tend to...'),
-  (3, 'communication', 'In a group conversation, you are most often the one who...'),
-  (4, 'communication', 'When a message from a friend upsets you, you...'),
-  (5, 'communication', 'Your texts usually look like...'),
-  (6, 'communication', 'When you explain something you care about, you...'),
-  (7, 'communication', 'In a disagreement, what matters most to you?'),
-  (8, 'communication', 'When someone asks "how are you?", you usually...'),
-  (9, 'communication', 'A conversation leaves you feeling good when...'),
-  (10, 'friendship', 'Your ideal Saturday with a friend is...'),
-  (11, 'friendship', 'Friends would most likely describe you as...'),
-  (12, 'friendship', 'When a friend is going through a hard time, you...'),
-  (13, 'friendship', 'What makes a friendship feel solid to you?'),
-  (14, 'friendship', 'What do you most want from a new friend?'),
-  (15, 'friendship', 'In your friend group, you are usually the one who...'),
-  (16, 'friendship', 'A friend cancels plans at the last minute. You...'),
-  (17, 'friendship', 'The conversations you remember most are about...'),
-  (18, 'friendship', 'You feel closest to someone after...');
+  (1, 'communication', 'When someone asks you a big question, you usually...'),
+  (2, 'communication', 'In conversations, you tend to...'),
+  (3, 'communication', 'When there''s a disagreement, you prefer to...'),
+  (4, 'communication', 'People describe your communication as...'),
+  (5, 'communication', 'You feel most comfortable when conversations are...'),
+  (6, 'communication', 'When someone is venting, you usually...'),
+  (7, 'communication', 'After a long social interaction, you feel...'),
+  (8, 'communication', 'You prefer communication that is...'),
+  (9, 'communication', 'Your biggest communication strength is...'),
+  (10, 'friendship', 'The best way for you to bond with someone is...'),
+  (11, 'friendship', 'You feel closest to friends who...'),
+  (12, 'friendship', 'You lose interest in friendships that are...'),
+  (13, 'friendship', 'Most of your friendships start because of...'),
+  (14, 'friendship', 'Your role in groups is usually...'),
+  (15, 'friendship', 'Your ideal hangout is...'),
+  (16, 'friendship', 'What matters most in a long-term friendship?'),
+  (17, 'friendship', 'Friends appreciate you most because you...'),
+  (18, 'friendship', 'When life gets hard, you want friends who...');
 
+-- Lucian's questions. Where one of his answers covered two styles (for
+-- example "Direct / Analytical"), it is split into two answers so every
+-- style can be told apart: 6 answers per communication question, 7 per
+-- friendship question.
 insert into public.test_options (question_id, badge, label) values
-  (1, 'IP', 'Listen, then take some time to think before I respond'),
-  (1, 'EP', 'Start talking it through with them right away'),
-  (1, 'DC', 'Ask what they need and suggest a next step'),
-  (1, 'RC', 'Make sure they feel heard and cared for'),
-  (1, 'AC', 'Ask questions to understand exactly what happened'),
-  (1, 'EC', 'Share a story that puts it in perspective'),
-  (2, 'IP', 'Think it over quietly on my own first'),
-  (2, 'EP', 'Talk it out with people until it becomes clear'),
-  (2, 'DC', 'Pick the most practical option and move on'),
-  (2, 'RC', 'Think about how it will affect the people I care about'),
-  (2, 'AC', 'Make a list of pros and cons and weigh them'),
-  (2, 'EC', 'Go with the option that feels most exciting'),
-  (3, 'IP', 'Listens closely and speaks up once I''ve thought it through'),
-  (3, 'EP', 'Thinks out loud and gets ideas flowing'),
-  (3, 'DC', 'Keeps things on track and gets to the point'),
-  (3, 'RC', 'Notices how everyone is feeling and draws people in'),
-  (3, 'AC', 'Fact-checks and adds the details'),
-  (3, 'EC', 'Tells the stories and makes people laugh'),
-  (4, 'IP', 'Wait until I''ve processed it before replying'),
-  (4, 'EP', 'Call them or reply quickly to talk it through'),
-  (4, 'DC', 'Tell them plainly what bothered me'),
-  (4, 'RC', 'Tell them how it made me feel and ask how they''re doing'),
-  (4, 'AC', 'Re-read it carefully to be sure what they meant'),
-  (4, 'EC', 'Reply with a lot of feeling, then smooth it over'),
-  (5, 'IP', 'A few thoughtful messages, sometimes sent hours later'),
-  (5, 'EP', 'Lots of quick messages as thoughts come to me'),
-  (5, 'DC', 'Short and to the point'),
-  (5, 'RC', 'Warm, with plenty of check-ins and kind words'),
-  (5, 'AC', 'Well organised and precise'),
-  (5, 'EC', 'Full of emojis, voice notes and enthusiasm'),
-  (6, 'IP', 'Choose my words carefully and take my time'),
-  (6, 'EP', 'Figure out what I think while I''m saying it'),
-  (6, 'DC', 'Give the key point first'),
-  (6, 'RC', 'Explain why it matters to me personally'),
-  (6, 'AC', 'Walk through it step by step'),
-  (6, 'EC', 'Paint the big picture and get people excited'),
-  (7, 'IP', 'Having time to think before we talk it through'),
-  (7, 'EP', 'Talking it all out until we understand each other'),
-  (7, 'DC', 'Being honest and solving it quickly'),
-  (7, 'RC', 'Both of us still feeling cared for'),
-  (7, 'AC', 'Getting the facts right'),
-  (7, 'EC', 'Clearing the air and moving on with energy'),
-  (8, 'IP', 'Give a short answer unless I know them well'),
-  (8, 'EP', 'Tell them what''s going on and see where it goes'),
-  (8, 'DC', 'Say "good, you?" and get to the point'),
-  (8, 'RC', 'Answer honestly and ask how they really are'),
-  (8, 'AC', 'Give an accurate update on what''s been happening'),
-  (8, 'EC', 'Launch into the highlights of my week'),
-  (9, 'IP', 'There was room for pauses and real thought'),
-  (9, 'EP', 'We bounced ideas off each other'),
-  (9, 'DC', 'We were honest and got somewhere'),
-  (9, 'RC', 'I felt understood'),
-  (9, 'AC', 'I learned something precise and new'),
-  (9, 'EC', 'It was fun and full of energy'),
-  (10, 'TL', 'A long walk where they can tell me what''s on their mind'),
-  (10, 'DD', 'Coffee and a conversation about life'),
-  (10, 'TA', 'Trying something neither of us has done before'),
-  (10, 'TE', 'Getting a few people together for something lively'),
-  (10, 'SH', 'A cosy day in where we can both relax'),
-  (10, 'TC', 'Our usual spot, like we always do'),
-  (10, 'TB', 'Working on a project or goal together'),
-  (11, 'TL', 'A great listener'),
-  (11, 'DD', 'Thoughtful and deep'),
-  (11, 'TA', 'Up for anything'),
-  (11, 'TE', 'The life of the party'),
-  (11, 'SH', 'The person you can tell anything'),
-  (11, 'TC', 'Reliable, always there'),
-  (11, 'TB', 'Motivated and encouraging'),
-  (12, 'TL', 'Let them talk for as long as they need'),
-  (12, 'DD', 'Help them make sense of what it means for them'),
-  (12, 'TA', 'Take them out to get their mind off it'),
-  (12, 'TE', 'Lift their mood and bring some light'),
-  (12, 'SH', 'Make sure they feel safe and not judged'),
-  (12, 'TC', 'Check in on them regularly'),
-  (12, 'TB', 'Help them make a plan to move forward'),
-  (13, 'TL', 'Knowing they really listen to me'),
-  (13, 'DD', 'Being able to talk about anything, even hard topics'),
-  (13, 'TA', 'Having shared memories and adventures'),
-  (13, 'TE', 'Always having fun together'),
-  (13, 'SH', 'Feeling completely accepted'),
-  (13, 'TC', 'Knowing they''ll show up'),
-  (13, 'TB', 'Helping each other grow'),
-  (14, 'TL', 'Someone who wants to hear my story'),
-  (14, 'DD', 'Someone to have real conversations with'),
-  (14, 'TA', 'Someone to explore and try new things with'),
-  (14, 'TE', 'Someone who brings energy and good vibes'),
-  (14, 'SH', 'Someone I can feel safe being myself around'),
-  (14, 'TC', 'Someone steady I can count on'),
-  (14, 'TB', 'Someone who pushes me to be better'),
-  (15, 'TL', 'Everyone confides in'),
-  (15, 'DD', 'Asks the big questions'),
-  (15, 'TA', 'Suggests the next adventure'),
-  (15, 'TE', 'Gets everyone excited'),
-  (15, 'SH', 'Makes sure everyone feels included'),
-  (15, 'TC', 'Remembers birthdays and keeps traditions going'),
-  (15, 'TB', 'Organises and keeps people moving toward goals'),
-  (16, 'TL', 'Ask what''s going on with them'),
-  (16, 'DD', 'Wonder if something deeper is happening'),
-  (16, 'TA', 'Find something else spontaneous to do'),
-  (16, 'TE', 'Rally some other people instead'),
-  (16, 'SH', 'Tell them it''s okay and that I''m there if they need me'),
-  (16, 'TC', 'Feel a bit thrown, and suggest a new date'),
-  (16, 'TB', 'Use the time to get something done'),
-  (17, 'TL', 'Someone else opening up to me'),
-  (17, 'DD', 'Meaning, values and the big questions'),
-  (17, 'TA', 'Places, plans and experiences'),
-  (17, 'TE', 'Wild ideas and lots of laughter'),
-  (17, 'SH', 'Feelings we had never shared before'),
-  (17, 'TC', 'Everyday life, little updates that add up'),
-  (17, 'TB', 'Ambitions and how to reach them'),
-  (18, 'TL', 'They trust me with something personal'),
-  (18, 'DD', 'We talk late into the night about what matters'),
-  (18, 'TA', 'We''ve been through an adventure together'),
-  (18, 'TE', 'We''ve had an amazing time together'),
-  (18, 'SH', 'I''ve been there for them, or they for me, in a hard moment'),
-  (18, 'TC', 'We''ve kept showing up for each other over time'),
-  (18, 'TB', 'We''ve helped each other reach a goal');
+  (1, 'IP', 'Need time to think before answering'),
+  (1, 'EP', 'Start talking to figure it out'),
+  (1, 'EC', 'Get excited and riff on the big picture'),
+  (1, 'DC', 'Give a short, clear answer'),
+  (1, 'AC', 'Ask a few questions to pin down exactly what''s meant'),
+  (1, 'RC', 'Share how you feel about it'),
+  (2, 'IP', 'Pause and reflect'),
+  (2, 'EP', 'Think out loud and explore ideas'),
+  (2, 'EC', 'Tell stories and keep the energy up'),
+  (2, 'DC', 'Stay focused on the point'),
+  (2, 'AC', 'Get the details and facts right'),
+  (2, 'RC', 'Make sure emotions are acknowledged'),
+  (3, 'IP', 'Take space to process'),
+  (3, 'EP', 'Talk it through immediately'),
+  (3, 'EC', 'Say how strongly you feel, then move on'),
+  (3, 'DC', 'Address the issue directly'),
+  (3, 'AC', 'Lay out the facts and work through them step by step'),
+  (3, 'RC', 'Repair the emotional tone'),
+  (4, 'IP', 'Thoughtful'),
+  (4, 'EP', 'Open, thinking out loud'),
+  (4, 'EC', 'Expressive'),
+  (4, 'DC', 'Direct'),
+  (4, 'AC', 'Precise'),
+  (4, 'RC', 'Warm'),
+  (5, 'IP', 'Calm and paced'),
+  (5, 'EP', 'Free-flowing, back and forth'),
+  (5, 'EC', 'Lively and full of energy'),
+  (5, 'DC', 'Efficient and to the point'),
+  (5, 'AC', 'Structured and well organised'),
+  (5, 'RC', 'Emotionally connected'),
+  (6, 'IP', 'Listen quietly'),
+  (6, 'EP', 'Ask lots of questions and talk it through with them'),
+  (6, 'EC', 'Share a story about when something similar happened to you'),
+  (6, 'DC', 'Offer solutions'),
+  (6, 'AC', 'Help them break the problem down'),
+  (6, 'RC', 'Validate their feelings'),
+  (7, 'IP', 'Mentally tired'),
+  (7, 'EP', 'Clearer in your head, having talked things through'),
+  (7, 'EC', 'Energized'),
+  (7, 'DC', 'Productive'),
+  (7, 'AC', 'Like replaying the details of what was said'),
+  (7, 'RC', 'Emotionally bonded'),
+  (8, 'IP', 'Thoughtful and intentional'),
+  (8, 'EP', 'Open, with room to think out loud'),
+  (8, 'EC', 'Spontaneous and animated'),
+  (8, 'DC', 'Clear and concise'),
+  (8, 'AC', 'Accurate and well reasoned'),
+  (8, 'RC', 'Empathetic and supportive'),
+  (9, 'IP', 'Listening deeply'),
+  (9, 'EP', 'Talking ideas into shape'),
+  (9, 'EC', 'Inspiring people with the big picture'),
+  (9, 'DC', 'Cutting through confusion'),
+  (9, 'AC', 'Explaining things precisely'),
+  (9, 'RC', 'Creating emotional safety'),
+  (10, 'TL', 'Listening while they open up'),
+  (10, 'DD', 'Deep conversation'),
+  (10, 'TA', 'Doing things together'),
+  (10, 'TE', 'Getting a group together for something fun'),
+  (10, 'TC', 'Spending regular time'),
+  (10, 'TB', 'Working toward goals together'),
+  (10, 'SH', 'Supporting each other emotionally'),
+  (11, 'TL', 'Really listen'),
+  (11, 'DD', 'Go beyond small talk'),
+  (11, 'TA', 'Are adventurous'),
+  (11, 'TE', 'Are fun and bring energy'),
+  (11, 'TC', 'Are consistent'),
+  (11, 'TB', 'Push you to grow'),
+  (11, 'SH', 'Make you feel safe'),
+  (12, 'TL', 'One-sided, where nobody really listens'),
+  (12, 'DD', 'Surface-level'),
+  (12, 'TA', 'Predictable'),
+  (12, 'TE', 'Low on energy and fun'),
+  (12, 'TC', 'Unreliable'),
+  (12, 'TB', 'Not going anywhere'),
+  (12, 'SH', 'Emotionally distant'),
+  (13, 'TL', 'Someone opening up to you'),
+  (13, 'DD', 'A meaningful talk'),
+  (13, 'TA', 'A shared activity'),
+  (13, 'TE', 'A party or group event'),
+  (13, 'TC', 'Proximity or routine'),
+  (13, 'TB', 'A shared project or goal'),
+  (13, 'SH', 'A vulnerable moment'),
+  (14, 'TL', 'One-on-one connector'),
+  (14, 'DD', 'The one who asks the big questions'),
+  (14, 'TA', 'The one who suggests the plan'),
+  (14, 'TE', 'Energy driver'),
+  (14, 'TC', 'Steady presence'),
+  (14, 'TB', 'The one who keeps everyone moving toward goals'),
+  (14, 'SH', 'Emotional anchor'),
+  (15, 'TL', 'A long walk where you properly catch up'),
+  (15, 'DD', 'Coffee and a deep talk'),
+  (15, 'TA', 'Trying something new'),
+  (15, 'TE', 'A night out with a group'),
+  (15, 'TC', 'A weekly routine'),
+  (15, 'TB', 'Working on something together, like a class or the gym'),
+  (15, 'SH', 'A heart-to-heart check-in'),
+  (16, 'TL', 'Feeling heard'),
+  (16, 'DD', 'Understanding'),
+  (16, 'TA', 'Experiences'),
+  (16, 'TE', 'Fun'),
+  (16, 'TC', 'Stability'),
+  (16, 'TB', 'Growing together'),
+  (16, 'SH', 'Trust'),
+  (17, 'TL', 'Truly listen'),
+  (17, 'DD', 'Ask the questions that matter'),
+  (17, 'TA', 'Are always up for something'),
+  (17, 'TE', 'Make things fun'),
+  (17, 'TC', 'Always show up'),
+  (17, 'TB', 'Help them reach their goals'),
+  (17, 'SH', 'Provide support'),
+  (18, 'TL', 'Just listen, without judging'),
+  (18, 'DD', 'Talk it through'),
+  (18, 'TA', 'Get you out of the house'),
+  (18, 'TE', 'Distract and uplift'),
+  (18, 'TC', 'Stay consistent'),
+  (18, 'TB', 'Help you make a plan'),
+  (18, 'SH', 'Offer emotional safety');
 
 alter table public.test_questions enable row level security;
 alter table public.test_options enable row level security;
@@ -198,6 +205,18 @@ revoke all on public.test_questions, public.test_options from authenticated;
 grant select on public.test_questions to authenticated;
 -- The app sees the wording but not which badge each option counts toward.
 grant select (id, question_id, label) on public.test_options to authenticated;
+
+-- Each person gets two badges: one communication style and one friendship
+-- style (e.g. IP/SH). The spec's secondary communication badge is dropped;
+-- the percentages still record every leaning.
+drop view public.current_test_results;
+alter table public.test_results drop column secondary_communication;
+alter table public.test_results rename column primary_communication to communication;
+create view public.current_test_results with (security_invoker = true) as
+select distinct on (user_id) *
+from public.test_results
+order by user_id, taken_at desc;
+revoke all on public.current_test_results from anon;
 
 -- Results are now written only by submit_test().
 drop policy "own results insert" on public.test_results;
@@ -328,8 +347,8 @@ $$;
 
 -- p_answers maps question id to option id, e.g. {"1": 4, "2": 9, ...}.
 -- Each badge's percentage is its share of the 9 answers in its half of the
--- test. Primary and secondary communication badges are the two most picked;
--- friendship is the most picked. Ties go to the badge picked earliest.
+-- test. The most-picked style in each half becomes the badge. Ties go to the
+-- style picked earliest.
 create function public.submit_test(p_answers jsonb) returns uuid
 language plpgsql security definer set search_path = '' as $$
 declare
@@ -383,8 +402,8 @@ begin
   from tallies;
 
   insert into public.test_results (user_id, answers, communication_scores, friendship_scores,
-    primary_communication, secondary_communication, friendship)
-  values (me, p_answers, comm, friend, ranked_comm[1], ranked_comm[2], ranked_friend[1])
+    communication, friendship)
+  values (me, p_answers, comm, friend, ranked_comm[1], ranked_friend[1])
   returning id into new_id;
 
   perform public.refresh_trust_level(me);
@@ -405,26 +424,28 @@ $$;
 -- How well two people's badges line up, 0 to 100, before the waiting boost
 -- and time zone nudge.
 --
--- Three slots are compared: primary communication (60%), secondary
--- communication (20%) and friendship (20%). A slot scores 100 when both
--- people have the same badge. Otherwise it scores 50 plus half of how much
--- each person also leans toward the other's badge (from their percentages),
--- so near-misses still count.
+-- Two slots are compared: communication (70%) and friendship (30%). A slot
+-- scores 100 when both people have the same badge. Otherwise it scores 50
+-- plus half of how much each person also leans toward the other's badge
+-- (from their percentages), so near-misses still count.
 --
 -- Then every pair of badges between the two people adds its adjustment from
--- the compatibility table, weighted by importance: two primary badges count
--- 60%, a primary and another badge 40%, any other pair 20%. All adjustments
--- start at 0, so out of the box this matches people who communicate alike.
+-- the compatibility table, weighted by the average of the two badges'
+-- weights: two communication badges count 70%, a communication and a
+-- friendship badge 50%, two friendship badges 30%. All adjustments start at
+-- 0, so out of the box this matches people who communicate alike.
 create function public.score_pair(
-  pc1 text, sc1 text, f1 text, cs1 jsonb, fs1 jsonb,
-  pc2 text, sc2 text, f2 text, cs2 jsonb, fs2 jsonb
+  c1 text, f1 text, cs1 jsonb, fs1 jsonb,
+  c2 text, f2 text, cs2 jsonb, fs2 jsonb
 ) returns numeric
 language sql stable security definer set search_path = '' as $$
-  with slots(w, x, y, px, py) as (
-    values
-      (0.6, pc1, pc2, cs1, cs2),
-      (0.2, sc1, sc2, cs1, cs2),
-      (0.2, f1, f2, fs1, fs2)
+  with w as (
+    select communication_weight as wc, friendship_weight as wf from public.matching_settings
+  ),
+  slots(w, x, y, px, py) as (
+    select wc, c1, c2, cs1, cs2 from w
+    union all
+    select wf, f1, f2, fs1, fs2 from w
   ),
   base as (
     select sum(w * case when x = y then 100
@@ -433,8 +454,8 @@ language sql stable security definer set search_path = '' as $$
                    end) as points
     from slots
   ),
-  mine(w, badge) as (values (0.6, pc1), (0.2, sc1), (0.2, f1)),
-  theirs(w, badge) as (values (0.6, pc2), (0.2, sc2), (0.2, f2)),
+  mine(w, badge) as (select wc, c1 from w union all select wf, f1 from w),
+  theirs(w, badge) as (select wc, c2 from w union all select wf, f2 from w),
   adj as (
     select sum((a.w + b.w) / 2 * public.compat_adjustment(a.badge, b.badge)) as points
     from mine a cross join theirs b
@@ -447,8 +468,8 @@ $$;
 create function public.compatibility_score(p_a uuid, p_b uuid) returns numeric
 language sql stable security definer set search_path = '' as $$
   select public.score_pair(
-    a.primary_communication, a.secondary_communication, a.friendship, a.communication_scores, a.friendship_scores,
-    b.primary_communication, b.secondary_communication, b.friendship, b.communication_scores, b.friendship_scores)
+    a.communication, a.friendship, a.communication_scores, a.friendship_scores,
+    b.communication, b.friendship, b.communication_scores, b.friendship_scores)
   from public.current_test_results a, public.current_test_results b
   where a.user_id = p_a and b.user_id = p_b;
 $$;
@@ -503,7 +524,7 @@ begin
   insert into pg_temp.queue_pairs
   with q as (
     select p.id, p.queued_at, public.tz_offset_hours(p.timezone) as tz,
-           t.primary_communication pc, t.secondary_communication sc, t.friendship f,
+           t.communication c, t.friendship f,
            t.communication_scores cs, t.friendship_scores fs
     from public.profiles p
     join public.current_test_results t on t.user_id = p.id
@@ -515,7 +536,7 @@ begin
   ),
   pairs as (
     select a.id as a, b.id as b,
-           public.score_pair(a.pc, a.sc, a.f, a.cs, a.fs, b.pc, b.sc, b.f, b.cs, b.fs) as score,
+           public.score_pair(a.c, a.f, a.cs, a.fs, b.c, b.f, b.cs, b.fs) as score,
            least(a.queued_at, b.queued_at) as waited,
            abs(a.tz - b.tz) as tz_gap
     from q a join q b on a.id < b.id
@@ -842,8 +863,7 @@ drop function public.match_partner(uuid);
 create function public.match_partner(p_match uuid)
 returns table (
   partner_id uuid,
-  primary_communication text,
-  secondary_communication text,
+  communication text,
   friendship text,
   trust_level smallint,
   display_name text,
@@ -859,8 +879,7 @@ language sql stable security definer set search_path = '' as $$
   )
   select
     p.id,
-    t.primary_communication,
-    t.secondary_communication,
+    t.communication,
     t.friendship,
     p.trust_level,
     case when r.reveal_name then p.display_name end,
@@ -904,7 +923,7 @@ grant execute on function public.can_message(uuid) to authenticated;
 -- create_match, score_pair, compatibility_score, refresh_trust_level.
 revoke execute on function public.run_matching() from authenticated;
 revoke execute on function public.create_match(uuid, uuid, boolean) from authenticated;
-revoke execute on function public.score_pair(text, text, text, jsonb, jsonb, text, text, text, jsonb, jsonb) from authenticated;
+revoke execute on function public.score_pair(text, text, jsonb, jsonb, text, text, jsonb, jsonb) from authenticated;
 revoke execute on function public.compatibility_score(uuid, uuid) from authenticated;
 revoke execute on function public.refresh_trust_level(uuid) from authenticated;
 revoke execute on function public.compat_adjustment(text, text) from authenticated;

@@ -28,18 +28,17 @@ export default function ResultsScreen() {
   const retakeFrom = new Date(new Date(result.taken_at).getTime() + cooldownDays * 86400000);
   const canRetake = retakeFrom <= new Date();
   const mine: [string, BadgeCode][] = [
-    ['Main communication style', result.primary_communication as BadgeCode],
-    ['Second communication style', result.secondary_communication as BadgeCode],
+    ['Communication style', result.communication as BadgeCode],
     ['Friendship style', result.friendship as BadgeCode],
   ];
 
   return (
     <ScrollView contentContainerStyle={styles.screen}>
       <Text style={styles.title} accessibilityRole="header">
-        {comboString(result.primary_communication, result.secondary_communication, result.friendship)}
+        {comboString(result.communication, result.friendship)}
       </Text>
       <Note>
-        Your badges are a short manual for how to talk with you. Matches see these three badges,
+        Your badges are a short manual for how to talk with you. Matches see these two badges,
         never your percentages.
       </Note>
 
@@ -60,7 +59,7 @@ export default function ResultsScreen() {
         <Bar key={code} label={badgeName(code)} percent={result.friendship_scores[code] ?? 0} />
       ))}
       <Note>
-        Matching uses these percentages, not just the badges, so close second choices still count.
+        Matching uses these percentages, not just the badges, so your second-strongest styles still count.
       </Note>
 
       {canRetake ? (

@@ -7,8 +7,7 @@ export type TestResult = {
   id: string;
   communication_scores: Record<string, number>;
   friendship_scores: Record<string, number>;
-  primary_communication: string;
-  secondary_communication: string;
+  communication: string;
   friendship: string;
   taken_at: string;
 };
@@ -49,7 +48,7 @@ export async function submitTest(answers: Record<number, number>) {
 export async function getMyResult() {
   const { data, error } = await supabase
     .from('current_test_results')
-    .select('id, communication_scores, friendship_scores, primary_communication, secondary_communication, friendship, taken_at')
+    .select('id, communication_scores, friendship_scores, communication, friendship, taken_at')
     .maybeSingle();
   if (error) throw error;
   return data as TestResult | null;
