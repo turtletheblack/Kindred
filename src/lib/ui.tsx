@@ -58,6 +58,16 @@ export function Note({ children }: { children: ReactNode }) {
   return <Text style={styles.note}>{children}</Text>;
 }
 
+// Supabase returns database errors as plain objects rather than Error
+// instances, so read the message from either.
+export function errorMessage(e: unknown, fallback: string) {
+  if (e instanceof Error) return e.message;
+  if (e && typeof e === 'object' && typeof (e as { message?: unknown }).message === 'string') {
+    return (e as { message: string }).message;
+  }
+  return fallback;
+}
+
 // Asks before a serious action. Alert has no buttons on web, so the browser's
 // confirm is used there.
 export function confirmAction(title: string, text: string, actionLabel: string) {

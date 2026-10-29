@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView, Text } from 'react-native';
 
 import { getQuestions, submitTest, type TestQuestion } from '../lib/test';
-import { Button, Card, Choice, Note, styles } from '../lib/ui';
+import { Button, Card, Choice, Note, styles, errorMessage } from '../lib/ui';
 
 // The 18-question test: one question at a time, then a review page where
 // any answer can be changed before submitting.
@@ -19,7 +19,7 @@ export default function TestScreen() {
   useEffect(() => {
     getQuestions()
       .then(setQuestions)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Could not load the test.'));
+      .catch((e) => setError(errorMessage(e, 'Could not load the test.')));
   }, []);
 
   if (!questions) {
@@ -37,7 +37,7 @@ export default function TestScreen() {
       await submitTest(answers);
       router.replace('/results');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+      setError(errorMessage(e, 'Something went wrong. Please try again.'));
     } finally {
       setBusy(false);
     }

@@ -10,7 +10,7 @@ import {
   type Profile,
 } from '../lib/profile';
 import { trustLevels } from '../lib/badges';
-import { Button, Field, Note, styles } from '../lib/ui';
+import { Button, Field, Note, styles, errorMessage } from '../lib/ui';
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -37,7 +37,7 @@ export default function ProfileScreen() {
       await action();
       setMessage(done);
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+      setMessage(errorMessage(e, 'Something went wrong. Please try again.'));
     } finally {
       setBusy(false);
     }

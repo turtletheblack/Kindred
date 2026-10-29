@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ScrollView, Text } from 'react-native';
 
 import { blockUser, getPartner, reportUser } from '../../../lib/matches';
-import { Button, Choice, Field, Note, styles, Toggle } from '../../../lib/ui';
+import { Button, Choice, Field, Note, styles, Toggle, errorMessage } from '../../../lib/ui';
 
 const reasons = [
   'Harassment or bullying',
@@ -36,7 +36,7 @@ export default function Report() {
       }
       setDone(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+      setError(errorMessage(e, 'Something went wrong. Please try again.'));
     } finally {
       setBusy(false);
     }
