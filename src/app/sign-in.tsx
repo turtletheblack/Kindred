@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ScrollView, Text } from 'react-native';
 
 import { sendCode, signInWithGoogle, verifyCode } from '../lib/auth';
-import { Button, Field, Note, styles } from '../lib/ui';
+import { Button, Field, Note, styles, errorMessage } from '../lib/ui';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -17,7 +17,7 @@ export default function SignIn() {
     try {
       await action();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+      setError(errorMessage(e, 'Something went wrong. Please try again.'));
     } finally {
       setBusy(false);
     }

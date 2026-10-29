@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView, Text } from 'react-native';
 
 import { finishOAuthSignIn } from '../../lib/auth';
-import { Button, styles } from '../../lib/ui';
+import { Button, styles, errorMessage } from '../../lib/ui';
 
 // Google sign-in returns here when the phone opens the app through a deep
 // link rather than handing the result straight back to the sign-in screen.
@@ -14,7 +14,7 @@ export default function AuthCallback() {
   useEffect(() => {
     finishOAuthSignIn(params)
       .then(() => setState('done'))
-      .catch((e) => setState(e instanceof Error ? e.message : 'Sign-in failed. Please try again.'));
+      .catch((e) => setState(errorMessage(e, 'Sign-in failed. Please try again.')));
   }, [params.code, params.error_description]);
 
   if (state === 'done') return <Redirect href="/" />;

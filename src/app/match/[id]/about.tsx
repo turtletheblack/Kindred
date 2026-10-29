@@ -14,7 +14,7 @@ import {
   type Partner,
 } from '../../../lib/matches';
 import { getMyProfile, setReveal, type Profile, type RevealSettings } from '../../../lib/profile';
-import { Button, Card, confirmAction, Field, Note, styles, Toggle } from '../../../lib/ui';
+import { Button, Card, confirmAction, Field, Note, styles, Toggle, errorMessage } from '../../../lib/ui';
 
 // About your match: their badges as a manual, what they've shared, what you
 // share with them, and the safety tools.
@@ -44,7 +44,7 @@ export default function AboutMatch() {
     try {
       await action();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+      setError(errorMessage(e, 'Something went wrong. Please try again.'));
     } finally {
       setBusy(false);
     }

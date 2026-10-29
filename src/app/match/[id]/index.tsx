@@ -25,7 +25,7 @@ import {
   type Message,
   type Partner,
 } from '../../../lib/matches';
-import { colors, Note, styles } from '../../../lib/ui';
+import { colors, Note, styles, errorMessage } from '../../../lib/ui';
 
 // One-on-one chat. No typing indicators, read receipts or unread counts.
 export default function Chat() {
@@ -61,7 +61,7 @@ export default function Chat() {
       setMessages((list) => (list.some((x) => x.id === m.id) ? list : [m, ...list]));
       setDraft('');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Message not sent. Please try again.');
+      setError(errorMessage(e, 'Message not sent. Please try again.'));
     } finally {
       setSending(false);
     }

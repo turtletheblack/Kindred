@@ -92,7 +92,9 @@ export async function sendMessage(matchId: string, senderId: string, body: strin
 // Live updates for one chat. Returns a function that stops listening.
 export function onNewMessage(matchId: string, handler: (message: Message) => void) {
   const channel = supabase
-    .channel(`match-${matchId}`)
+    // A fresh name each time: re-using a name returns the already-subscribed
+    // channel, which can't take new listeners.
+    .channel(`match-${matchId}-${Math.random().toString(36).slice(2)}`)
     .on(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'messages', filter: `match_id=eq.${matchId}` },
@@ -107,7 +109,7 @@ export function onNewMessage(matchId: string, handler: (message: Message) => voi
 // Live updates when a match is created or ends.
 export function onMatchChange(handler: () => void) {
   const channel = supabase
-    .channel('my-matches')
+    .channel(`my-matches-${Math.random().toString(36).slice(2)}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, handler)
     .subscribe();
   return () => {

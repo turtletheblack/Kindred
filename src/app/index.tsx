@@ -16,7 +16,7 @@ import {
 } from '../lib/matches';
 import { getMyProfile, type Profile } from '../lib/profile';
 import { getMyResult, type TestResult } from '../lib/test';
-import { Button, Card, Note, styles } from '../lib/ui';
+import { Button, Card, Note, styles, errorMessage } from '../lib/ui';
 
 type Current = { match: MatchSummary; partner: Partner | null };
 
@@ -44,7 +44,7 @@ export default function Home() {
       setCurrent(active ? { match: active, partner: await getPartner(active.match_id) } : null);
       setLastEnded(!active && matches[0]?.status === 'ended' ? matches[0] : null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not load. Pull down to try again.');
+      setError(errorMessage(e, 'Could not load. Pull down to try again.'));
     } finally {
       setLoading(false);
     }
@@ -66,7 +66,7 @@ export default function Home() {
       await action();
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+      setError(errorMessage(e, 'Something went wrong. Please try again.'));
     } finally {
       setBusy(false);
     }
