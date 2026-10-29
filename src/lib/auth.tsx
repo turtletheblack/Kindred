@@ -65,17 +65,29 @@ export async function signInWithGoogle() {
   if (error) throw error;
 
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  // On some phones the browser hands back through a deep link to
+  // /auth/callback instead, and that screen finishes the sign-in.
   if (result.type !== 'success') return;
+  await finishOAuthSignIn(Linking.parse(result.url).queryParams ?? {});
+}
 
-  const { queryParams } = Linking.parse(result.url);
-  if (typeof queryParams?.error_description === 'string') {
-    throw new Error(queryParams.error_description);
+const usedCodes = new Set<string>();
+
+// Turns the one-time code Google sign-in returns into a session. Both the
+// sign-in screen and /auth/callback may see the same code, so only the
+// first call uses it.
+export async function finishOAuthSignIn(params: Record<string, unknown>) {
+  if (typeof params.error_description === 'string') {
+    throw new Error(params.error_description);
   }
-  if (typeof queryParams?.code !== 'string') {
+  const code = params.code;
+  if (typeof code !== 'string') {
     throw new Error('Google sign-in did not finish. Please try again.');
   }
-  const exchange = await supabase.auth.exchangeCodeForSession(queryParams.code);
-  if (exchange.error) throw exchange.error;
+  if (usedCodes.has(code)) return;
+  usedCodes.add(code);
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) throw error;
 }
 
 export async function signOut() {
