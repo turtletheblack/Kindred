@@ -189,13 +189,15 @@ do $$ begin
   perform pg_temp.check((select count(*) from public.matches) = 2, 'nobody else was matched');
 end $$;
 
+-- Ana chooses to keep to one chat at a time.
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a') \g /dev/null
+update public.profiles set chat_limit = 1;
 do $$ begin
   begin
     perform public.join_queue();
     raise exception 'FAILED: second match';
   exception when raise_exception then
-    raise notice 'ok: one connection at a time';
+    perform pg_temp.check(sqlerrm like '%limit of 1 chats%', 'you can''t go over the chat limit you chose');
   end;
 end $$;
 
@@ -311,7 +313,10 @@ do $$ begin
 end $$;
 
 -- Exploratory: Cal and Dee score low, but an exploratory turn pairs them anyway.
+-- Eve and Fay step out of the queue so Dee is Cal's only possible partner.
 update public.matching_settings set exploratory_share = 1;
+update public.profiles set matching_status = 'inactive', queued_at = null
+  where id in ('00000000-0000-0000-0000-00000000000e', '00000000-0000-0000-0000-00000000000f');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000c') \g /dev/null
 select public.join_queue() \g /dev/null
 reset role;

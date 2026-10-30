@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Alert, Platform, ScrollView, Text } from 'react-native';
+import { Alert, Platform, ScrollView, Text, View } from 'react-native';
 
 import { deleteAccount } from '../lib/auth';
 import {
   confirmAdult,
   deviceTimezone,
   getMyProfile,
+  updateMyPreferences,
   updateMyProfile,
   type Profile,
 } from '../lib/profile';
+import { getChatLimits } from '../lib/health';
 import { trustLevels } from '../lib/badges';
-import { Button, Field, Note, styles, errorMessage } from '../lib/ui';
+import { Button, Field, Note, styles, Toggle, errorMessage } from '../lib/ui';
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -20,8 +22,10 @@ export default function ProfileScreen() {
   const [birthDate, setBirthDate] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [limits, setLimits] = useState({ default_chat_limit: 3, max_chat_limit: 10 });
 
   useEffect(() => {
+    getChatLimits().then(setLimits).catch(() => {});
     getMyProfile().then((p) => {
       setProfile(p);
       setName(p.display_name ?? '');
@@ -44,7 +48,9 @@ export default function ProfileScreen() {
   }
 
   function askToDelete() {
-    const text = 'This permanently deletes your account, profile, test results and chats. It cannot be undone.';
+    const text =
+      'This permanently deletes your account, profile, test results and chats. It cannot be undone. ' +
+      'Survey answers are kept as anonymous totals.';
     // Alert has no buttons on web, so fall back to the browser's confirm.
     if (Platform.OS === 'web') {
       if (globalThis.confirm?.(text)) void deleteAccount();
@@ -96,6 +102,41 @@ export default function ProfileScreen() {
         }
       />
 
+      <Text style={styles.heading} accessibilityRole="header">How many chats can you handle right now?</Text>
+      <Note>
+        Kindred won't look for new matches once you have this many open chats. Change it whenever
+        you like; your current chats stay as they are.
+      </Note>
+      <ChatLimit
+        value={Math.min(limits.max_chat_limit, profile.chat_limit ?? limits.default_chat_limit)}
+        max={limits.max_chat_limit}
+        disabled={busy}
+        onChange={(n) =>
+          run(async () => {
+            await updateMyPreferences(profile.id, { chat_limit: n });
+            setProfile({ ...profile, chat_limit: n });
+          }, `Saved: up to ${n} ${n === 1 ? 'chat' : 'chats'}.`)
+        }
+      />
+
+      <Text style={styles.heading} accessibilityRole="header">Gentle prompts</Text>
+      <Note>
+        Small cards in a chat when it's gone quiet, or when a match could go deeper, with a
+        question you can use if you like. They're only shown to you, and nothing is ever sent for
+        you. Check-ins are separate and always optional.
+      </Note>
+      <Toggle
+        label="Show gentle prompts"
+        value={profile.gentle_prompts}
+        disabled={busy}
+        onValueChange={(v) =>
+          run(async () => {
+            await updateMyPreferences(profile.id, { gentle_prompts: v });
+            setProfile({ ...profile, gentle_prompts: v });
+          }, v ? 'Gentle prompts on.' : 'Gentle prompts off.')
+        }
+      />
+
       {!profile.adult_confirmed_at && (
         <>
           <Text style={styles.heading} accessibilityRole="header">Confirm you're 18 or over</Text>
@@ -131,5 +172,26 @@ export default function ProfileScreen() {
       <Text style={styles.heading} accessibilityRole="header">Delete account</Text>
       <Button label="Delete my account" tone="danger" onPress={askToDelete} />
     </ScrollView>
+  );
+}
+
+function ChatLimit({ value, max, disabled, onChange }: {
+  value: number;
+  max: number;
+  disabled: boolean;
+  onChange: (n: number) => void;
+}) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+      <View style={{ width: 64 }}>
+        <Button label="−" tone="plain" disabled={disabled || value <= 1} onPress={() => onChange(value - 1)} />
+      </View>
+      <Text style={[styles.title, { minWidth: 32, textAlign: 'center' }]} accessibilityLiveRegion="polite">
+        {value}
+      </Text>
+      <View style={{ width: 64 }}>
+        <Button label="+" tone="plain" disabled={disabled || value >= max} onPress={() => onChange(value + 1)} />
+      </View>
+    </View>
   );
 }

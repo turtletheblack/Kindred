@@ -12,6 +12,8 @@ export type Profile = {
   trust_level: number;
   matching_status: 'inactive' | 'queued' | 'paused';
   suspended_at: string | null;
+  chat_limit: number | null;
+  gentle_prompts: boolean;
 };
 
 export type ProfileEdits = Pick<Profile, 'display_name' | 'contact' | 'region' | 'timezone'>;
@@ -29,7 +31,7 @@ export function deviceTimezone() {
 export async function getMyProfile() {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, display_name, contact, region, timezone, adult_confirmed_at, trust_level, matching_status, suspended_at')
+    .select('id, display_name, contact, region, timezone, adult_confirmed_at, trust_level, matching_status, suspended_at, chat_limit, gentle_prompts')
     .single();
   if (error) throw error;
   return data as Profile;
@@ -37,6 +39,12 @@ export async function getMyProfile() {
 
 export async function updateMyProfile(id: string, edits: ProfileEdits) {
   const { error } = await supabase.from('profiles').update(edits).eq('id', id);
+  if (error) throw error;
+}
+
+// How many chats you can handle, and whether the app may show gentle prompts.
+export async function updateMyPreferences(id: string, prefs: Partial<Pick<Profile, 'chat_limit' | 'gentle_prompts'>>) {
+  const { error } = await supabase.from('profiles').update(prefs).eq('id', id);
   if (error) throw error;
 }
 
