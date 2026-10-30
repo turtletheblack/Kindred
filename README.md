@@ -29,7 +29,9 @@ someone bypasses the app:
 | Your test results and scores | You (partners see only your two badges) |
 | A match and its messages | The two people in it |
 | What you've revealed | You choose, per match |
-| Your check-in answers | You |
+| Your check-in answers | You (if you both give the same answer, you both learn that) |
+| Your connection health answers | You |
+| Your "someone who matters" answer | You (admins see only totals) |
 | When you last opened a chat | You (no read receipts) |
 | Your blocks and reports | You (admins see reports) |
 | Compatibility table | Everyone signed in reads it, admins edit it |
@@ -43,7 +45,8 @@ only be changed by server functions, never directly from the app.
 - `compatibility`: one row per pair of badges with an `adjustment` that starts
   at 0. Edit it in the Supabase table editor to try out a theory; no code change needed.
 - `matching_settings`: the 60-point threshold, 10% exploratory share,
-  15-message check-in point and 90-day retake wait.
+  15-message check-in point, 90-day retake wait, chat limits (default 3, most 10)
+  and the timings for prompts and the survey.
 - `profiles`: private details, rough area and time zone, 18+ confirmation, trust level.
 - `test_results`: every test taken, with answers and per-badge percentages.
   The newest one counts (`current_test_results`), so retakes are kept as history.
@@ -55,10 +58,18 @@ only be changed by server functions, never directly from the app.
   sees which.
 - `filter_terms`: phrases the chat filter blocks, or flags so both people see
   crisis help links. Add your own in the table editor.
+- `health_checks`: private "How's this connection feeling?" answers.
+- `prompt_snoozes`: when someone tapped "Not now" on a card.
+- `conversation_prompts`: the questions people can pick from in a chat, in
+  three levels. Edit or add your own in the table editor.
+- `matters_answers`: answers to "have you met someone who matters to you?".
 
 Server functions the app calls: `confirm_adult`, `submit_test`, `join_queue`,
 `leave_queue`, `find_match`, `my_matches`, `match_partner`, `mark_match_read`,
-`block_user`, `end_match`, `report_user`, `delete_my_account`.
+`block_user`, `end_match`, `report_user`, `delete_my_account`, `match_prompts`,
+`answer_checkin`, `mutual_exit`, `answer_health_check`, `snooze_prompt`,
+`matters_due`, `answer_matters`, `snooze_matters`. Admins can also call
+`matters_results` and `checkin_results`.
 
 ## How the core loop works
 
@@ -90,8 +101,9 @@ whenever anyone else joins. Each pair gets a score out of 100:
   `exploratory`, so check-in answers can later show whether the table is right.
 
 Pairs are never matched if either has blocked the other, or if they were
-matched before. Everyone must be 18+ and have taken the test. Kindred keeps to
-one match at a time (`max_active_matches`). Every number above is a column in
+matched before. Everyone must be 18+ and have taken the test. Each person
+chooses how many chats they can handle (3 until they change it, up to
+`max_chat_limit`), and Kindred stops looking for them at that number. Every number above is a column in
 `matching_settings`, so you can change it without touching code.
 
 To try a theory, for example that Safe Harbor and Internal Processor get on
@@ -254,11 +266,50 @@ can't see matches or chats, hidden fields stay hidden until revealed, blocks
 end matches, ended pairs are never re-matched, deleting an account removes
 everything except anonymised safety reports) and the core loop (scoring,
 matching order, waiting boost, exploratory matches, the message filter, trust
-levels and automatic pauses).
+levels and automatic pauses), and check-ins and connection health (chat
+limits, private and mutual check-in answers, the pulse, bridge, health and
+deepen cards, and the survey).
+
+## How check-ins and connection health work
+
+Everything here asks people how it's going. Nothing reads or scores
+messages, nothing is posted into a chat, and no card ever ends a match. Each
+chat shows at most one card at a time, above the message box, and every card
+has a "Not now".
+
+- **The check-in.** Once you've each sent 15 messages: "Are you enjoying this
+  conversation?" Only you see your answer. If you both say yes, you both
+  find out, and the deepest questions open. If you both say no, you both find
+  out, and either of you can end it together with no blame. A mixed answer
+  changes nothing and is never shown, not even to the second person to answer.
+  After a yes, the app asks: "Has your match done something that meant something
+  to you? Want to tell them?" and puts the cursor in the message box.
+- **Connection health.** After two weeks, then about monthly: "How's this
+  connection feeling?" (growing, steady, fading, not sure) and "Does it feel
+  balanced?" Private. If it's fading, the app offers a question or reminds you
+  a Kind Exit is okay.
+- **The pulse.** When a match hasn't reached the check-in point and has been
+  quiet for 72 hours (including when nobody has said hello), both people get a
+  card saying a quiet start is normal, with an opener question to use.
+- **The bridge.** When a real conversation has gone quiet for 14 days: a card
+  with a catch-up question.
+- **Deepen.** When you both said yes and the match is 3 weeks old: a one-time
+  suggestion to try a voice call, a game online, or watching something at the
+  same time. Never meeting in person.
+- **Questions.** "Need a question?" above the message box shows one you can
+  use, edit or skip. Level 1 is open from the start, level 2 at the check-in
+  point, level 3 once you both said yes.
+- **Someone who matters.** At 30, 90 and 365 days after joining, Home asks:
+  "Since joining Kindred, have you met someone here who matters to you?"
+  Admins see totals with `select * from public.matters_results();`, and
+  check-in results next to match scores (to compare exploratory matches with
+  chosen ones) with `select * from public.checkin_results();`.
+
+Each person can turn off the pulse, bridge and deepen cards in their profile
+(*Gentle prompts*). Timings are columns in `matching_settings`.
 
 ## Not built yet
 
-These come in later steps: the "Did you enjoy this conversation?" check-in,
-connection health (5:1 ratio, reciprocity), the 72-hour pulse, inactivity
-bridges and deep-question prompts, suggesting a call or meetup, push
-notifications, the admin page, and scheduled backups.
+These come in later steps: push notifications (so prompts currently show only
+when the app is open), self check-ins about late nights and open chats, the
+admin page, and scheduled backups.
