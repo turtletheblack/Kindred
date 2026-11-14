@@ -123,7 +123,7 @@ export default function ProfileScreen() {
       <Note>
         Small cards in a chat when it's gone quiet, or when a match could go deeper, with a
         question you can use if you like. They're only shown to you, and nothing is ever sent for
-        you. Check-ins are separate and always optional.
+        you. They're off unless you turn them on. Check-ins are separate and always optional.
       </Note>
       <Toggle
         label="Show gentle prompts"
@@ -131,7 +131,7 @@ export default function ProfileScreen() {
         disabled={busy}
         onValueChange={(v) =>
           run(async () => {
-            await updateMyPreferences(profile.id, { gentle_prompts: v });
+            await updateMyPreferences(profile.id, { gentle_prompts: v, gentle_prompts_asked: true });
             setProfile({ ...profile, gentle_prompts: v });
           }, v ? 'Gentle prompts on.' : 'Gentle prompts off.')
         }

@@ -122,6 +122,9 @@ begin
   perform pg_temp.check(pg_temp.prompt('00000000-0000-0000-0000-00000000000a', m) is null,
     'a brand new match shows no card');
   update public.matches set created_at = now() - interval '73 hours' where id = m;
+  perform pg_temp.check(pg_temp.prompt('00000000-0000-0000-0000-00000000000a', m) is null,
+    'gentle prompts are off until you turn them on');
+  update public.profiles set gentle_prompts = true;
   perform pg_temp.check(pg_temp.prompt('00000000-0000-0000-0000-00000000000a', m) = 'pulse'
     and pg_temp.prompt('00000000-0000-0000-0000-00000000000d', m) = 'pulse',
     'after 72 quiet hours both people get the pulse');

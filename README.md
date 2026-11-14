@@ -305,8 +305,9 @@ has a "Not now".
   check-in results next to match scores (to compare exploratory matches with
   chosen ones) with `select * from public.checkin_results();`.
 
-Each person can turn off the pulse, bridge and deepen cards in their profile
-(*Gentle prompts*). Timings are columns in `matching_settings`.
+The pulse, bridge and deepen cards (*Gentle prompts*) are off until someone
+turns them on. Home offers them once after the test, and the profile has the
+switch. Timings are columns in `matching_settings`.
 
 ## Not built yet
 

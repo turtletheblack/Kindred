@@ -15,7 +15,7 @@ import {
   type Partner,
 } from '../lib/matches';
 import { answerMatters, getChatLimits, mattersDue, snoozeMatters, type MattersAnswer } from '../lib/health';
-import { getMyProfile, type Profile } from '../lib/profile';
+import { getMyProfile, updateMyPreferences, type Profile } from '../lib/profile';
 import { getMyResult, type TestResult } from '../lib/test';
 import { Button, Card, Note, styles, errorMessage } from '../lib/ui';
 
@@ -121,6 +121,20 @@ export default function Home() {
             setThanks(answered);
           }}
         />
+      )}
+      {result && !profile.gentle_prompts_asked && (
+        <Card>
+          <Text style={styles.heading}>Want gentle prompts?</Text>
+          <Text style={styles.body}>
+            If a chat goes quiet, or a match could go deeper, Kindred can show you a small card
+            with a question you could use. Only you see them, and nothing is ever sent for you.
+            They're off unless you turn them on, and you can change this in your profile anytime.
+          </Text>
+          <Button label="Turn them on" disabled={busy}
+            onPress={() => run(() => updateMyPreferences(profile.id, { gentle_prompts: true, gentle_prompts_asked: true }))} />
+          <Button label="No thanks" tone="plain" disabled={busy}
+            onPress={() => run(() => updateMyPreferences(profile.id, { gentle_prompts_asked: true }))} />
+        </Card>
       )}
       {thanks && <Note>Thank you. Your answer is private and helps show whether Kindred works.</Note>}
 
