@@ -1,5 +1,6 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useHeaderHeight } from 'expo-router/react-navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -9,11 +10,13 @@ import {
   Text,
   TextInput,
   View,
+  type TextInputInstance,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '../../../lib/auth';
 import { comboString, crisisHelp } from '../../../lib/badges';
+import { getMatchPrompts, type MatchPrompts } from '../../../lib/health';
 import {
   getMatchStatus,
   getMessages,
@@ -25,6 +28,7 @@ import {
   type Message,
   type Partner,
 } from '../../../lib/matches';
+import { MatchPromptCard, QuestionPicker, type QuestionKind } from '../../../lib/prompts';
 import { colors, Note, styles, errorMessage } from '../../../lib/ui';
 
 // One-on-one chat. No typing indicators, read receipts or unread counts.
@@ -38,9 +42,18 @@ export default function Chat() {
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [prompts, setPrompts] = useState<MatchPrompts | null>(null);
+  const [picker, setPicker] = useState<QuestionKind | null>(null);
+  const input = useRef<TextInputInstance>(null);
+  const headerHeight = useHeaderHeight();
+
+  const loadPrompts = useCallback(() => {
+    if (id) getMatchPrompts(id).then(setPrompts).catch(() => {});
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
+    loadPrompts();
     getMessages(id).then(setMessages).catch(() => setError('Could not load messages.'));
     getPartner(id).then(setPartner).catch(() => {});
     getMatchStatus(id).then(setStatus).catch(() => {});
@@ -48,8 +61,9 @@ export default function Chat() {
     return onNewMessage(id, (m) => {
       setMessages((list) => (list.some((x) => x.id === m.id) ? list : [m, ...list]));
       void markRead(id).catch(() => {});
+      loadPrompts();
     });
-  }, [id]);
+  }, [id, loadPrompts]);
 
   async function send() {
     const body = draft.trim();
@@ -60,6 +74,7 @@ export default function Chat() {
       const m = await sendMessage(id, me, body);
       setMessages((list) => (list.some((x) => x.id === m.id) ? list : [m, ...list]));
       setDraft('');
+      loadPrompts();
     } catch (e) {
       setError(errorMessage(e, 'Message not sent. Please try again.'));
     } finally {
@@ -86,8 +101,10 @@ export default function Chat() {
       />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        // Android draws behind the keyboard (edge-to-edge), so both platforms
+        // need padding to keep the newest messages and the message box visible.
+        behavior={Platform.OS === 'web' ? undefined : 'padding'}
+        keyboardVerticalOffset={headerHeight}
       >
         <FlatList
           inverted
@@ -109,9 +126,39 @@ export default function Chat() {
           )}
         />
         {error && <Text style={[styles.error, { paddingHorizontal: 16 }]} accessibilityLiveRegion="polite">{error}</Text>}
+        {active && id && prompts && !picker && (
+          <MatchPromptCard
+            key={prompts.prompt ?? 'none'}
+            matchId={id}
+            prompts={prompts}
+            onChanged={loadPrompts}
+            onAskQuestion={setPicker}
+            onWriteToThem={() => input.current?.focus()}
+            onEnded={() => router.dismissTo('/')}
+          />
+        )}
+        {active && picker && (
+          <QuestionPicker
+            kind={picker}
+            ladder={prompts?.ladder ?? 1}
+            onUse={(text) => {
+              setDraft(text);
+              setPicker(null);
+              input.current?.focus();
+            }}
+            onClose={() => setPicker(null)}
+          />
+        )}
+        {active && !picker && (
+          <Pressable accessibilityRole="button" onPress={() => setPicker('any')} hitSlop={8}
+            style={{ alignSelf: 'flex-start', paddingHorizontal: 16, paddingTop: 8 }}>
+            <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>Need a question?</Text>
+          </Pressable>
+        )}
         {active ? (
           <View style={{ flexDirection: 'row', gap: 8, padding: 12, borderTopWidth: 1, borderColor: colors.border }}>
             <TextInput
+              ref={input}
               accessibilityLabel="Message"
               placeholder="Write a message"
               placeholderTextColor={colors.muted}

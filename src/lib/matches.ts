@@ -7,6 +7,7 @@ export type MatchSummary = {
   created_at: string;
   ended_at: string | null;
   ended_by_me: boolean;
+  ended_mutually: boolean;
   end_reason: string | null;
   has_new: boolean;
 };
