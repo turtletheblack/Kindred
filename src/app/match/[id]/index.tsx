@@ -1,4 +1,5 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
@@ -44,6 +45,7 @@ export default function Chat() {
   const [prompts, setPrompts] = useState<MatchPrompts | null>(null);
   const [picker, setPicker] = useState<QuestionKind | null>(null);
   const input = useRef<TextInputInstance>(null);
+  const headerHeight = useHeaderHeight();
 
   const loadPrompts = useCallback(() => {
     if (id) getMatchPrompts(id).then(setPrompts).catch(() => {});
@@ -99,8 +101,10 @@ export default function Chat() {
       />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        // Android draws behind the keyboard (edge-to-edge), so both platforms
+        // need padding to keep the newest messages and the message box visible.
+        behavior={Platform.OS === 'web' ? undefined : 'padding'}
+        keyboardVerticalOffset={headerHeight}
       >
         <FlatList
           inverted

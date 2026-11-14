@@ -132,6 +132,10 @@ begin
   update public.profiles set gentle_prompts = false where id = '00000000-0000-0000-0000-00000000000d';
   execute 'reset role';
   perform pg_temp.check(pg_temp.prompt('00000000-0000-0000-0000-00000000000a', m) is null, '"Not now" hides the pulse');
+  update public.matching_settings set pulse_hours = 0;
+  perform pg_temp.check(pg_temp.prompt('00000000-0000-0000-0000-00000000000a', m) is null,
+    '"Not now" keeps the pulse hidden even when the pulse timing is set very low');
+  update public.matching_settings set pulse_hours = 72;
   perform pg_temp.check(pg_temp.prompt('00000000-0000-0000-0000-00000000000d', m) = 'pulse',
     'you can''t turn off someone else''s prompts');
   update public.profiles set gentle_prompts = false where id = '00000000-0000-0000-0000-00000000000d';

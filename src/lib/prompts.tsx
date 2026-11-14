@@ -57,6 +57,14 @@ export function MatchPromptCard({
   const [balance, setBalance] = useState<Balance | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Once a card is answered or dismissed it hides straight away, rather than
+  // showing the old card again while the next one loads.
+  const [hidden, setHidden] = useState(false);
+
+  function refresh() {
+    setHidden(true);
+    onChanged();
+  }
 
   async function run(action: () => Promise<unknown>, then?: () => void) {
     setBusy(true);
@@ -64,7 +72,7 @@ export function MatchPromptCard({
     try {
       await action();
       if (then) then();
-      else onChanged();
+      else refresh();
     } catch (e) {
       setError(errorMessage(e, 'Something went wrong. Please try again.'));
     } finally {
@@ -75,7 +83,7 @@ export function MatchPromptCard({
   const later = () => run(() => snoozePrompt(matchId, prompts.prompt!));
   const done = () => {
     setAfter(null);
-    onChanged();
+    refresh();
   };
 
   let body: ReactNode = null;
@@ -143,7 +151,7 @@ export function MatchPromptCard({
             </Text>
             <Buttons>
               <Small label="Show me one" tone="accent" disabled={busy}
-                onPress={() => run(() => snoozePrompt(matchId, 'strengthened'), () => { onChanged(); onAskQuestion('deep'); })} />
+                onPress={() => run(() => snoozePrompt(matchId, 'strengthened'), () => { refresh(); onAskQuestion('deep'); })} />
               <Small label="OK" disabled={busy} onPress={later} />
             </Buttons>
           </>
@@ -218,7 +226,7 @@ export function MatchPromptCard({
               <Small label="Save" tone="accent" disabled={busy || !feeling} onPress={() =>
                 run(() => answerHealthCheck(matchId, feeling!, balance), () => {
                   if (feeling === 'fading' || balance === 'one_sided') setAfter('fading');
-                  else onChanged();
+                  else refresh();
                 })} />
               <Small label="Not now" disabled={busy} onPress={later} />
             </Buttons>
@@ -235,7 +243,7 @@ export function MatchPromptCard({
             </Text>
             <Buttons>
               <Small label="Give me a deeper question" tone="accent" disabled={busy}
-                onPress={() => run(() => snoozePrompt(matchId, 'deepen'), () => { onChanged(); onAskQuestion('deep'); })} />
+                onPress={() => run(() => snoozePrompt(matchId, 'deepen'), () => { refresh(); onAskQuestion('deep'); })} />
               <Small label="Got it" disabled={busy} onPress={later} />
             </Buttons>
           </>
@@ -244,7 +252,7 @@ export function MatchPromptCard({
     }
   }
 
-  if (!body) return null;
+  if (!body || hidden) return null;
   return (
     <View style={{ paddingHorizontal: 12, paddingTop: 8 }}>
       <Card>
